@@ -6,9 +6,7 @@ export const httpRequest = async (
     headers = {}
   ) => {
     try {
-        console.log("url",endPoint);
       const url = `${process.env.REACT_APP_BASE_URL}/${endPoint}`;
-        console.log("url",url);
         
       // Append query parameters to the URL
       Object.keys(params).forEach((key) => {

@@ -3,7 +3,7 @@ import './App.css';
 import Navbar from './components/Navbar/Navbar';
 import { Link, BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import Home from './pages/Home/Home';
-import EditEmployee from './pages/Employee/EditEmployee';
+import EmployeeForm from './pages/Employee/EmployeeForm';
 function App() {
   return (
     <div className="App">
@@ -11,7 +11,7 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path='editemployee' element={<EditEmployee />} />
+          <Route path='employeeForm' element={<EmployeeForm />} />
           
         </Routes>
       </BrowserRouter>

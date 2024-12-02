@@ -1,17 +1,25 @@
-import * as React from 'react';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import IconButton from '@mui/material/IconButton';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import React, { useState, useEffect } from 'react';
+import {
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Button,
+  Skeleton,
+} from '@mui/material';
+import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import { getEmployee } from '../../Redux/Actions/employeeAction';
+import { deleteEmployee, getEmployee } from '../../Redux/Actions/employeeAction';
+import { useNavigate } from 'react-router-dom';
 
 const columns = [
   { id: 'fullName', label: 'Full Name', minWidth: 170 },
@@ -24,25 +32,49 @@ const columns = [
 ];
 
 export default function StickyHeadTable() {
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const data = useSelector((state) => state.employeeList);
-  const dispatch = useDispatch();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [open, setOpen] = useState(false);
+  const [deleteRow, setDeleteRow] = useState(null);
 
-  React.useEffect(() => {
+  const data = useSelector((state) => state.employeeList);
+  const { isLoading, deleteEmpl } = useSelector((state) => state);
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  useEffect(() => {
     dispatch(getEmployee());
   }, [dispatch]);
 
-  const rows = data?.data || []; // Ensure rows are defined, fallback to an empty array
+  useEffect(() => {
+    if (deleteEmpl?.data) {
+      dispatch(getEmployee());
+    }
+  }, [deleteEmpl, dispatch]);
+
+  const rows = data?.data || [];
 
   const handleEdit = (row) => {
-    console.log('Edit:', row);
-    // Implement your edit logic here
+    navigate(`employeeForm?id=${row?._id}`);
   };
 
-  const handleDelete = (row) => {
-    console.log('Delete:', row);
-    // Implement your delete logic here
+  const handleClickOpen = (row) => {
+    setOpen(true);
+    setDeleteRow(row);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setDeleteRow(null);
+  };
+
+  const handleDelete = () => {
+    setOpen(false);
+    setDeleteRow(null);
+    if (deleteRow?._id) {
+      dispatch(deleteEmployee(deleteRow._id));
+    }
   };
 
   const handleChangePage = (event, newPage) => {
@@ -72,43 +104,65 @@ export default function StickyHeadTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => (
-                <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-                  {columns.map((column) => {
-                    const value = row[column.id];
-                    return (
-                      <TableCell key={column.id} align={column.align}>
-                        {column.id === 'action' ? (
-                          <div>
-                            <IconButton
-                              color="primary"
-                              onClick={() => handleEdit(row)}
-                            >
-                              <EditIcon />
-                            </IconButton>
-                            <IconButton
-                              color="secondary"
-                              onClick={() => handleDelete(row)}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </div>
-                        ) : column.id === 'image' ? (
-                          <img
-                            src={value}
-                            alt="Employee"
-                            style={{ width: 50, height: 50, borderRadius: '50%' }}
-                          />
-                        ) : (
-                          value
-                        )}
-                      </TableCell>
-                    );
-                  })}
+            {data?.isLoading && rows.length === 0 ? (
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={index}>
+                  {columns.map((column) => (
+                    <TableCell key={column.id}>
+                      <Skeleton variant="text" sx={{ fontSize: '1rem' }} />
+                    </TableCell>
+                  ))}
                 </TableRow>
-              ))}
+              ))
+            ) : rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} align="center">
+                  No data found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((row) => (
+                  <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
+                    {columns.map((column) => {
+                      const value = row[column.id];
+                      return (
+                        <TableCell key={column.id} align={column.align}>
+                          {column.id === 'action' ? (
+                            <div>
+                              <IconButton
+                                color="primary"
+                                onClick={() => handleEdit(row)}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                              <IconButton
+                                color="secondary"
+                                onClick={() => handleClickOpen(row)}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </div>
+                          ) : column.id === 'image' ? (
+                            <img
+                              src={value}
+                              alt="Employee"
+                              style={{
+                                width: 50,
+                                height: 50,
+                                borderRadius: '50%',
+                              }}
+                            />
+                          ) : (
+                            value
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
@@ -121,6 +175,21 @@ export default function StickyHeadTable() {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete this employee? This action cannot be
+          undone.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary">
+            No
+          </Button>
+          <Button onClick={handleDelete} color="error">
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 }
