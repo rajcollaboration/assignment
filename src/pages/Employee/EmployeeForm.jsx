@@ -56,6 +56,8 @@ function EmployeeForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log(name,value);
+    
     setFormData({ ...formData, [name]: value });
   };
 
@@ -153,13 +155,8 @@ function EmployeeForm() {
           <input
             type="tel"
             name="phone"
-            value={formData.phone}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (/^\d*$/.test(value)) {
-                handleChange(e);
-              }
-            }}
+            value={formData?.phone}
+            onChange={handleChange}
             placeholder="Enter your phone number"
             maxLength="10"
           />

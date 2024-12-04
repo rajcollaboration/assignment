@@ -14,9 +14,6 @@ function Home() {
             <Button variant="contained" color="primary" sx={{mr: "10px"}} onClick={()=> navigate('employeeForm')}>
                 Add Employee
             </Button>
-            <Button variant="contained" color="secondary">
-                View Employees
-            </Button>
             <br />
             <br />
             <Table />
